@@ -1,26 +1,25 @@
-#import gymnasium as
 
 import gym
 import gym_laser_tracker
 from stable_baselines3 import PPO
+from stable_baselines3.common.logger import configure
 
+# Create environment
 env = gym.make("LaserTracker-v0")
 
-# Train the agent
+# Create model
 model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=10000)
 
-# Save the model
-model.save("ppo_laser_tracker")
+# Set up TensorBoard logging
+log_path = "logs/ppo_laser_tracker_tensorboard/"
+new_logger = configure(log_path, ["stdout", "tensorboard"])
+model.set_logger(new_logger)
 
-# Optional: load and test
-model = PPO.load("ppo_laser_tracker")
-obs = env.reset()
-for _ in range(100):
-    action, _ = model.predict(obs)
-    obs, reward, done, info = env.step(action)
-    env.render()
-    if done:
-        obs = env.reset()
+# Train and save
+total_timesteps = 30000
+model.learn(total_timesteps=total_timesteps)
+
+model_path = "ppo_laser_tracker"
+model.save(model_path)
+
 env.close()
-
