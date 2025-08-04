@@ -4,6 +4,9 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+MARGIN_OF_ERROR = 5
+SUDDEN_SWIFT = True
+
 class LaserTrackerEnv(gym.Env):
     def __init__(self):
         super(LaserTrackerEnv, self).__init__()
@@ -12,13 +15,14 @@ class LaserTrackerEnv(gym.Env):
         self.observation_space = spaces.Box(low=-90, high=90, shape=(1,), dtype=np.float32)
 
         # Action: delta angle to move the laser (in degrees)
-        self.action_space = spaces.Discrete(3)  # 0: left, 1: stay, 2: right
+        ACTION_TOTAL = 9
+        self.action_space = spaces.Discrete(ACTION_TOTAL)  # 0: left, 1: stay, 2: right
 
         # Internal state
         self.servo_angle = 90  # Initial servo angle (center)
         self.target_angle = self._generate_target_angle()
 
-        self.max_steps = 50
+        self.max_steps = 7
         self.current_step = 0
 
         plt.ion()
@@ -33,24 +37,44 @@ class LaserTrackerEnv(gym.Env):
     def step(self, action):
         self.current_step += 1
 
-        # Simulate px3 - move servo angle based on action
-        if action == 0:
-            self.servo_angle = max(0, self.servo_angle - 5)
-        elif action == 2:
-            self.servo_angle = min(180, self.servo_angle + 5)
+        self.action_update(action)
 
-        # Observation is angle difference from target
+        if SUDDEN_SWIFT:# simulate oc moving right first, then turning left suddenly
+            if self.current_step == 2:
+                self.target_angle = max(0, self.target_angle - 30)  # sudden shift left
+            elif self.current_step == 3:
+                self.target_angle = min(180, self.target_angle + 30)  # sudden shift right
+
         rel_angle = self._get_relative_angle()
+        reward = -abs(rel_angle) / 90
+        done = abs(rel_angle) <= MARGIN_OF_ERROR or self.current_step >= self.max_steps
 
-        # Reward: the closer the servo to target, the higher the reward
-        reward = -abs(rel_angle) / 90  # normalized between -1 and 0
-        done = abs(rel_angle) < 3 or self.current_step >= self.max_steps
-
-        if abs(rel_angle) < 3:
-            reward += 1  # bonus for hitting the target
+        if abs(rel_angle) <= MARGIN_OF_ERROR:
+            reward += 1
 
         return np.array([rel_angle], dtype=np.float32), reward, done, {}
-
+        
+        
+    def action_update(self, action):
+        if action == 0:
+            self.servo_angle = max(0, self.servo_angle - 20)
+        elif action == 1:
+            self.servo_angle = max(0, self.servo_angle - 15)
+        elif action == 2:
+            self.servo_angle = max(0, self.servo_angle - 10)
+        elif action == 3:
+            self.servo_angle = max(0, self.servo_angle - 5)
+        elif action == 4:
+            pass
+        elif action == 5:
+            self.servo_angle = min(180, self.servo_angle + 5)
+        elif action == 6:
+            self.servo_angle = min(180, self.servo_angle + 10)
+        elif action == 7:
+            self.servo_angle = min(180, self.servo_angle + 15)
+        elif action == 8:
+            self.servo_angle = min(180, self.servo_angle + 20)
+            
     def render(self, mode="human"):
         self.ax.clear()
         self.ax.set_xlim(0, 180)
