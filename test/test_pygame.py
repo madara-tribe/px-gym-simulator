@@ -1,79 +1,124 @@
 import pygame
 import numpy as np
-import cv2
-from stable_baselines3 import PPO
+import random
+import time
 import gym
 import gym_laser_tracker
+from stable_baselines3 import PPO
+import cv2
 
-# --- Config ---
+# Constants
 WIDTH, HEIGHT = 640, 480
-FPS = 30
-EPISODES = 3
-STEPS = 20
-SAVE_VIDEO = True
+MARGIN_OF_ERROR = 5
+SUDDEN_SWIFT = True
+MAX_STEPS = 7
+FPS = 1.5
+SUCCESS_TARGET = 10
 
-# --- Pygame setup ---
+# Load model and environment
+model = PPO.load("ppo_laser_tracker")
+env = gym.make("LaserTracker-v0")
+
+# Pygame init
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Laser Tracker RL - Minimal with Video")
-clock = pygame.time.Clock()
+pygame.display.set_caption("Laser Tracker - Test")
 font = pygame.font.SysFont(None, 24)
-BLACK, RED, GREEN, WHITE = (0, 0, 0), (255, 0, 0), (0, 255, 0), (255, 255, 255)
+clock = pygame.time.Clock()
 
-# --- Env & model ---
-env = gym.make("LaserTracker-v0")
-model = PPO.load("ppo_laser_tracker")
+# Video writer setup
+video_filename = "tracking_result.mp4"
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+video_writer = cv2.VideoWriter(video_filename, fourcc, 10, (WIDTH, HEIGHT))
 
-# --- Video writer ---
-if SAVE_VIDEO:
-    video_writer = cv2.VideoWriter(
-        "laser_tracking_rl_minimal.mp4",
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        FPS,
-        (WIDTH, HEIGHT)
-    )
+def angle_to_pos(angle):
+    return int(angle / 180 * WIDTH)
 
-# --- Draw function ---
-def draw(relative_angle, servo_angle, target_angle):
-    screen.fill(BLACK)
-    cx, cy = WIDTH // 2, HEIGHT // 2
-    offset = int((target_angle - 90) * (WIDTH / 180))
-    pygame.draw.circle(screen, RED, (cx + offset, cy), 10)
+def draw_state(screen, servo_angle, target_angle, step, reward, done, success_count):
+    screen.fill((255, 255, 255))
+    # draw laser(red) and label
+    laser_x = angle_to_pos(servo_angle)
+    pygame.draw.circle(screen, (255, 0, 0), (angle_to_pos(servo_angle), HEIGHT // 2), 10)
+    laser_label = font.render("Laser", True, (255, 0, 0))
+    screen.blit(laser_label, (laser_x - 20, HEIGHT // 2 - 25))
 
-    angle_rad = np.deg2rad(servo_angle - 90)
-    lx = int(cx + 300 * np.sin(angle_rad))
-    ly = int(cy - 300 * np.cos(angle_rad))
-    pygame.draw.line(screen, GREEN, (cx, cy), (lx, ly), 3)
+    # Draw target(green) and label
+    target_x = angle_to_pos(target_angle)
+    pygame.draw.circle(screen, (0, 255, 0), (target_x, HEIGHT // 2), 10)
+    target_label = font.render("Target", True, (0, 128, 0))
+    screen.blit(target_label, (target_x - 25, HEIGHT // 2 + 15))
 
-    info = font.render(f"Tgt: {target_angle:.1f}°  Servo: {servo_angle:.1f}°  Err: {relative_angle[0]:.1f}°", True, WHITE)
-    screen.blit(info, (20, 20))
+    # Info
+    info = f"Step: {step} | Reward: {reward:.2f} | Success: {success_count}"
+    text = font.render(info, True, (0, 0, 0))
+    screen.blit(text, (20, 20))
     pygame.display.flip()
+    
+    # Save to video
+    frame = pygame.surfarray.array3d(screen)
+    frame = np.rot90(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    video_writer.write(frame)
 
-    if SAVE_VIDEO:
-        frame = pygame.surfarray.array3d(screen)
-        video_frame = cv2.cvtColor(np.transpose(frame, (1, 0, 2)), cv2.COLOR_RGB2BGR)
-        video_writer.write(video_frame)
-
-# --- Main loop ---
-for ep in range(EPISODES):
+def run_episode(success_count):
     obs = env.reset()
-    for step in range(STEPS):
+    servo_angle = 90
+    target_angle = env.target_angle
+    step = 0
+    done = False
+    success = False
+    
+    # Draw initial (reset) state
+    draw_state(screen, servo_angle, target_angle, step, 0.0, False, success_count)
+    time.sleep(0.5)
+    
+    while not done:
+        clock.tick(FPS)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                video_writer.release()
                 exit()
 
         action, _ = model.predict(obs)
         obs, reward, done, _ = env.step(action)
+        servo_angle = env.servo_angle
+        target_angle = env.target_angle
+        step += 1
 
-        draw(obs, env.servo_angle, env.target_angle)
-        clock.tick(FPS)
+        if abs(target_angle - servo_angle) <= MARGIN_OF_ERROR:
+            success = True
 
-        if done:
-            break
+        draw_state(screen, servo_angle, target_angle, step, reward, done, success_count)
 
-env.close()
-if SAVE_VIDEO:
+    if success:
+        success_count += 1
+    return success_count
+
+def main():
+    success_count = 0
+
+    while success_count < SUCCESS_TARGET:
+        success_count = run_episode(success_count)
+        time.sleep(1)
+
+    # Game cleared
+    screen.fill((0, 255, 0))
+    cleared_text = font.render("Game Cleared!", True, (0, 0, 0))
+    screen.blit(cleared_text, (WIDTH // 2 - 80, HEIGHT // 2))
+    pygame.display.flip()
+
+    for _ in range(30):
+        frame = pygame.surfarray.array3d(screen)
+        frame = np.rot90(frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        video_writer.write(frame)
+        time.sleep(1 / 10)
+
     video_writer.release()
-pygame.quit()
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
 
