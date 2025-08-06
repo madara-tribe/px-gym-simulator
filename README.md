@@ -12,7 +12,6 @@ The goal of the system is to track a moving target by minimizing the difference 
 | Python           | 3.8+           |
 | gym              | ≥ 0.26         |
 | stable-baselines3 | ≥ 2.0         |
-| numpy            | ≥ 1.19         |
 | pygame           | ≥ 2.1          |
 
 # simulaor
