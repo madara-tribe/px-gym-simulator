@@ -1,1 +1,42 @@
-# px-gym-simulator
+# Abstract
+
+This repository simulates a robotic laser tracking system called **PX** using Reinforcement Learning (RL).  
+It provides a full pipeline from environment setup and training using **OpenAI Gym**, to real-time testing with a **Pygame-based visual interface**.
+
+The goal of the system is to track a moving target by minimizing the difference between the **image center (ic)** and **object center (oc)** using a servo-mounted laser, simulating camera + laser co-motion.
+
+## Library Versions
+
+| Library          | Version       |
+|------------------|----------------|
+| Python           | 3.8+           |
+| gym              | ≥ 0.26         |
+| stable-baselines3 | ≥ 2.0         |
+| numpy            | ≥ 1.19         |
+| pygame           | ≥ 2.1          |
+
+# simulaor
+
+## About Gym Training
+You can train a reinforcement learning agent using OpenAI Gym and Stable-Baselines3.
+Environment: LaserTrackerEnv simulates a servo-laser mounted system trying to follow a moving target.
+Training: Implemented via PPO algorithm (train_rl.py)
+Metrics: Training logs can be visualized in TensorBoard
+Reset behavior: After each episode, the servo angle and target position are re-initialized
+
+```bash
+# when to train 
+python3 train/train_rl.py
+```
+
+## About Pygame Test
+
+You can test the trained model in a visual simulator built with Pygame.
+Visualizes the tracking process of the RL agent in real time
+Target moves with configurable behavior (including sudden direction shifts)
+Game ends when the agent consistently aligns the laser with the target
+Success is measured based on angle difference (margin of error)
+```bash
+# when to test on pygame
+python3 test/test_with_pygame.py
+```
