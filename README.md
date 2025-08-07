@@ -1,3 +1,5 @@
+# Gym simulator
+
 # Abstract
 
 This repository simulates a software and hardware system—such as a robotic platform—to evaluate its feasibility.
@@ -30,6 +32,9 @@ python3 train/train_rl.py
 You can test the trained model in a visual simulator built with **Pygame**.
 
 The simulation allows you to visualize the model’s behavior and performance in real time.
+
+https://github.com/user-attachments/assets/6b2802d9-c56f-4e24-8244-ce46548d2ec9
+
 
 ```bash
 # when to test on pygame
