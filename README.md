@@ -1,9 +1,10 @@
 # Abstract
 
-This repository simulates a robotic laser tracking system called **PX** using Reinforcement Learning (RL).  
-It provides a full pipeline from environment setup and training using **OpenAI Gym**, to real-time testing with a **Pygame-based visual interface**.
+This repository simulates a software and hardware system—such as a robotic platform—to evaluate its feasibility.
 
-The goal of the system is to track a moving target by minimizing the difference between the **image center (ic)** and **object center (oc)** using a servo-mounted laser, simulating camera + laser co-motion.
+You can set up an environment for training using ***OpenAI Gym***, and perform real-time testing through a Pygame-based visual interface.
+
+The main algorithm used is reinforcement learning. You can customize the approach depending on your specific use case.
 
 ## Library Versions
 
