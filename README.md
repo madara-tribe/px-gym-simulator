@@ -33,7 +33,7 @@ You can test the trained model in a visual simulator built with **Pygame**.
 
 The simulation allows you to visualize the model’s behavior and performance in real time.
 
-https://github.com/user-attachments/assets/9eaadfc1-bee1-40a6-b9ad-8f3aeaecd749
+<img width="600" height="400" alt="Image" src="https://github.com/user-attachments/assets/bfdefbbd-2bcc-46e2-a061-a1dfb8a832ad" />
 
 ```bash
 # when to test on pygame
