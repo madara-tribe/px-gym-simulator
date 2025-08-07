@@ -18,7 +18,7 @@ The main algorithm used is reinforcement learning. You can customize the approac
 # simulaor
 
 ## About Gym Training
-You can train with simulated environment by reinforcement learning agent through OpenAI Gym.
+You can train a reinforcement learning agent in a simulated environment using **OpenAI Gym**.
 
 ```bash
 # when to train 
@@ -27,9 +27,9 @@ python3 train/train_rl.py
 
 ## About Pygame Test
 
-You can test the trained model in a visual simulator built with Pygame.
+You can test the trained model in a visual simulator built with **Pygame**.
 
-you can Visualize its process of the performance in real time. 
+The simulation allows you to visualize the model’s behavior and performance in real time.
 
 ```bash
 # when to test on pygame
